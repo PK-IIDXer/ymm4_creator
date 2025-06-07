@@ -1,5 +1,6 @@
 import uuid
 
+
 def create_voice_item_template(speaker_name="ずんだもん"):
     """
     YMM4のボイスアイテムの基本的なテンプレートをゼロから生成する関数
@@ -22,14 +23,18 @@ def create_voice_item_template(speaker_name="ずんだもん"):
         "ContinueSerif": False,
         "Frame": 0,
         "Length": 60,
-        "Layer": 2, # デフォルトのレイヤー
+        "Layer": 2,  # デフォルトのレイヤー
         "Guid": str(uuid.uuid4()),
         "IsLocked": False,
         "IsHidden": False,
         "Remark": "",
         "Group": 0,
         "X": {"Values": [{"Value": 0.0}], "Span": 0.0, "Centering": "None"},
-        "Y": {"Values": [{"Value": 400.0}], "Span": 0.0, "Centering": "None"}, # 字幕のデフォルトY座標
+        "Y": {
+            "Values": [{"Value": 400.0}],
+            "Span": 0.0,
+            "Centering": "None",
+        },  # 字幕のデフォルトY座標
         "Z": {"Values": [{"Value": 0.0}], "Span": 0.0, "Centering": "None"},
         "Zoom": {"Values": [{"Value": 100.0}], "Span": 0.0},
         "Alpha": {"Values": [{"Value": 100.0}], "Span": 0.0},
@@ -37,6 +42,6 @@ def create_voice_item_template(speaker_name="ずんだもん"):
         "RotationY": {"Values": [{"Value": 0.0}], "Span": 0.0},
         "RotationZ": {"Values": [{"Value": 0.0}], "Span": 0.0},
         "Effects": [],
-        "Transitions": []
+        "Transitions": [],
     }
     return template

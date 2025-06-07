@@ -1,16 +1,18 @@
-import requests
 import json
 import os
 import subprocess
 import time
-from pathlib import Path
-from config import VOICEVOX_PATH, API_ENDPOINT
+
+import requests
+
+from config import API_ENDPOINT, VOICEVOX_PATH
+
 
 class VoicevoxClient:
     def __init__(self, host=API_ENDPOINT):
         """
         VOICEVOX APIクライアントの初期化
-        
+
         Args:
             host (str): VOICEVOX APIのホストURL
         """
@@ -40,14 +42,16 @@ class VoicevoxClient:
                         time.sleep(1)
                 raise Exception("VOICEVOXの起動がタイムアウトしました")
             except FileNotFoundError:
-                raise Exception(f"VOICEVOXが見つかりません。パスを確認してください: {VOICEVOX_PATH}")
+                raise Exception(
+                    f"VOICEVOXが見つかりません。パスを確認してください: {VOICEVOX_PATH}"
+                )
             except Exception as e:
                 raise Exception(f"VOICEVOXの起動に失敗しました: {str(e)}")
 
     def text_to_speech(self, text, output_path, speaker_id=None, speed=1.0):
         """
         テキストを音声に変換して保存する
-        
+
         Args:
             text (str): 変換するテキスト
             output_path (str): 出力する音声ファイルのパス
@@ -58,50 +62,42 @@ class VoicevoxClient:
             self.speaker_id = speaker_id
 
         # テキストを音声クエリに変換
-        query_params = {
-            "text": text,
-            "speaker": self.speaker_id
-        }
-        
+        query_params = {"text": text, "speaker": self.speaker_id}
+
         # 音声クエリの取得
-        query_response = requests.post(
-            f"{self.host}/audio_query",
-            params=query_params
-        )
+        query_response = requests.post(f"{self.host}/audio_query", params=query_params)
         query_response.raise_for_status()
-        
+
         # 音声クエリのパラメータを設定
         query_data = query_response.json()
         query_data["speedScale"] = speed
-        
+
         # 音声合成
-        synthesis_params = {
-            "speaker": self.speaker_id
-        }
+        synthesis_params = {"speaker": self.speaker_id}
         synthesis_response = requests.post(
             f"{self.host}/synthesis",
             params=synthesis_params,
-            data=json.dumps(query_data)
+            data=json.dumps(query_data),
         )
         synthesis_response.raise_for_status()
-        
+
         # 音声ファイルの保存
         output_dir = os.path.dirname(output_path)
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
-            
+
         with open(output_path, "wb") as f:
             f.write(synthesis_response.content)
-        
+
         return output_path
 
     def get_speakers(self):
         """
         利用可能な話者の一覧を取得する
-        
+
         Returns:
             list: 話者情報のリスト
         """
         response = requests.get(f"{self.host}/speakers")
         response.raise_for_status()
-        return response.json() 
+        return response.json()

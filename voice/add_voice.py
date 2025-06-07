@@ -1,9 +1,10 @@
 import os
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 # プロジェクトのルートディレクトリをPythonパスに追加
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(str(Path(__file__).parent.parent.absolute()))
 
 # isort: off
 from utils import (
@@ -60,7 +61,7 @@ def add_voice_scene(config: VoiceSceneConfig) -> None:
         speed=config.speed,
     )
     voice_file_path = generate_voice(voice_config, "output/voice.wav")
-    if not voice_file_path or not os.path.exists(voice_file_path):
+    if not voice_file_path or not Path(voice_file_path).exists():
         print("音声ファイルの生成に失敗したか、ファイルが見つかりません。")
         return
 
@@ -132,8 +133,7 @@ def add_voice(config: VoiceConfig, output_path: str) -> None:
     audio_data = client.synthesize_audio(audio_query, config.speaker_id)
 
     # 音声ファイルの保存
-    with open(output_path, "wb") as f:
-        f.write(audio_data)
+    Path(output_path).write_bytes(audio_data)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ import os
 import shutil
 
 from pdf2image import convert_from_path
+from config import get_imagemagick_path
 
 
 def get_pdflatex_command() -> str:
@@ -109,23 +110,8 @@ def convert_pdf_to_png(pdf_file: Path, output_file: Path, dpi: int) -> None:
 
         print(f"PDFファイルのサイズ: {pdf_file.stat().st_size} バイト")
 
-        # ImageMagickのパスを確認
-        magick_path = shutil.which('magick')
-        if magick_path is None:
-            # Windowsの場合、一般的なインストール場所を確認
-            possible_paths = [
-                r'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe',
-                r'C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe',
-                r'C:\Program Files (x86)\ImageMagick-7.1.1-Q16\magick.exe'
-            ]
-            for path in possible_paths:
-                if os.path.exists(path):
-                    magick_path = path
-                    break
-            
-            if magick_path is None:
-                raise FileNotFoundError('ImageMagickが見つかりません。インストールされているか確認してください。')
-
+        # ImageMagickのパスを取得
+        magick_path = get_imagemagick_path()
         print(f"ImageMagickのパス: {magick_path}")
 
         # 出力ディレクトリが存在しない場合は作成
@@ -225,7 +211,8 @@ def latex_to_png(
         convert_pdf_to_png(pdf_file, output_path, dpi)
         print("PDFの変換完了")
 
-        return str(output_path)
+        # 文字列として返す
+        return str(output_path.absolute())
 
     except Exception as e:
         print(f"エラーの詳細: {type(e).__name__}: {str(e)}")

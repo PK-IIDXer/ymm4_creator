@@ -9,7 +9,7 @@ from pathlib import Path
 import requests
 
 # プロジェクトのルートディレクトリをPythonパスに追加
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(str(Path(__file__).parent.parent.absolute()))
 
 
 def get_latex_env_path() -> Path:
@@ -58,20 +58,20 @@ def create_latex_env_structure(bin_dir: str) -> None:
         bin_dir (str): LaTeX環境のベースディレクトリパス
     """
     # 必要なディレクトリを作成
+    bin_path = Path(bin_dir)
     dirs = [
-        os.path.join(bin_dir, "bin"),
-        os.path.join(bin_dir, "texmf", "tex", "latex"),
-        os.path.join(bin_dir, "texmf", "fonts"),
-        os.path.join(bin_dir, "texmf", "doc"),
+        bin_path / "bin",
+        bin_path / "texmf" / "tex" / "latex",
+        bin_path / "texmf" / "fonts",
+        bin_path / "texmf" / "doc",
     ]
     for d in dirs:
-        os.makedirs(d, exist_ok=True)
+        d.mkdir(parents=True, exist_ok=True)
 
     # README.mdを作成
-    readme_path = os.path.join(bin_dir, "README.md")
-    with open(readme_path, "w", encoding="utf-8") as f:
-        f.write(
-            """# 埋め込みLaTeX環境
+    readme_path = bin_path / "README.md"
+    readme_path.write_text(
+        """# 埋め込みLaTeX環境
 
 このディレクトリには、アプリケーション用の最小限のLaTeX環境が含まれています。
 以下のコンポーネントが含まれています:
@@ -82,8 +82,9 @@ def create_latex_env_structure(bin_dir: str) -> None:
 - 必要なフォント
 
 この環境は完全に自己完結しており、システムのLaTeX環境に依存しません。
-"""
-        )
+""",
+        encoding="utf-8"
+    )
 
 
 def download_texlive() -> Path:

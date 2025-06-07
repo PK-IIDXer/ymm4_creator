@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from .voicevox_client import VoicevoxClient
 
@@ -34,9 +35,8 @@ def generate_voice(config: VoiceConfig, output_path: str) -> str:
         str: 生成された音声ファイルのパス
     """
     # 出力ディレクトリの作成
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 音声生成
     client = VoicevoxClient()
@@ -59,17 +59,16 @@ def generate_voice(config: VoiceConfig, output_path: str) -> str:
     audio_data = client.synthesize_audio(audio_query, config.speaker_id)
 
     # 音声ファイルの保存
-    with open(output_path, "wb") as f:
-        f.write(audio_data)
+    output_path.write_bytes(audio_data)
 
-    return output_path
+    return str(output_path)
 
 
 def main() -> None:
     """メイン関数"""
     # 出力ディレクトリの作成
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = Path("output")
+    output_dir.mkdir(exist_ok=True)
 
     # テキストの入力
     text = input("テキストを入力してください: ")
@@ -85,12 +84,10 @@ def main() -> None:
     )
 
     # 出力ファイル名を生成
-    output_path = os.path.join(
-        output_dir, f"voice_{speaker_id}_speed{config.speed}.wav"
-    )
+    output_path = output_dir / f"voice_{speaker_id}_speed{config.speed}.wav"
 
     # 音声生成
-    generate_voice(config, output_path)
+    generate_voice(config, str(output_path))
 
 
 if __name__ == "__main__":

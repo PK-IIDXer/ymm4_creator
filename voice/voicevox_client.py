@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import time
+from pathlib import Path
 from typing import Any, Optional, Union
 
 import requests
@@ -92,14 +93,12 @@ class VoicevoxClient:
         synthesis_response.raise_for_status()
 
         # 音声ファイルの保存
-        output_dir = os.path.dirname(output_path)
-        if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, "wb") as f:
-            f.write(synthesis_response.content)
+        output_path.write_bytes(synthesis_response.content)
 
-        return output_path
+        return str(output_path)
 
     def get_speakers(self) -> list[dict[str, Any]]:
         """

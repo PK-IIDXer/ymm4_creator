@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 # プロジェクトのルートディレクトリをPythonパスに追加
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(str(Path(__file__).parent.parent.absolute()))
 
 # isort: off
 from utils import (
@@ -36,17 +36,18 @@ def add_latex_scene(
         return
 
     # 出力先のディレクトリが存在しない場合は作成
-    output_dir = os.path.join(os.path.dirname(output_file_path), "formulas")
-    os.makedirs(output_dir, exist_ok=True)
+    output_path = Path(output_file_path)
+    output_dir = output_path.parent / "formulas"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # 衝突を避けるためにファイル名にハッシュ値などを使うとより安全
     formula_image_filename = f"formula_{hash(latex_formula)}.png"
-    formula_image_path = os.path.join(output_dir, formula_image_filename)
+    formula_image_path = output_dir / formula_image_filename
 
     # LaTeX数式をPNG画像に変換
     try:
         # YMM4が確実にパスを解決できるよう、絶対パスに変換する
-        abs_formula_image_path = os.path.abspath(formula_image_path)
+        abs_formula_image_path = str(formula_image_path.absolute())
         latex_to_png(latex_formula, abs_formula_image_path)
     except Exception as e:
         print(f"数式の画像変換に失敗しました: {e}")
@@ -76,9 +77,9 @@ def add_latex_scene(
     project_data["Timelines"][0]["Items"].append(new_image_item)
 
     # 新しいプロジェクトファイルとして保存
-    if not save_ymmp_project(project_data, output_file_path):
+    if not save_ymmp_project(project_data, str(output_path)):
         return
-    print(f"LaTeXシーンを追加し、{output_file_path} に保存しました。")
+    print(f"LaTeXシーンを追加し、{output_path} に保存しました。")
 
 
 def add_latex(
@@ -100,22 +101,18 @@ def add_latex(
     """
     try:
         # YMMPファイルのデータを取得
-        with open(ymmp_path, encoding="utf-8") as f:
-            ymmp_data = json.load(f)
+        ymmp_path = Path(ymmp_path)
+        ymmp_data = json.loads(ymmp_path.read_text(encoding="utf-8"))
 
         # LaTeX数式をPNGに変換
         png_path = latex_to_png(
             latex_text,
-            output_path=os.path.join(
-                os.path.dirname(ymmp_path),
-                "formulas",
-                f"formula_{hash(latex_text)}.png",
-            ),
+            output_path=str(ymmp_path.parent / "formulas" / f"formula_{hash(latex_text)}.png"),
         )
 
         # 画像アイテムのテンプレートを作成
         image_item = create_image_item_template()
-        image_item["FilePath"] = png_path
+        image_item["FilePath"] = str(png_path)  # Pathオブジェクトを文字列に変換
         image_item["Position"] = {"X": position[0], "Y": position[1]}
         image_item["Scale"] = scale
 
@@ -123,9 +120,11 @@ def add_latex(
         ymmp_data["tracks"]["image_track"]["items"].append(image_item)
 
         # 変更を保存
-        output_path = output_path or ymmp_path
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(ymmp_data, f, ensure_ascii=False, indent=4)
+        output_path = Path(output_path or ymmp_path)
+        output_path.write_text(
+            json.dumps(ymmp_data, ensure_ascii=False, indent=4),
+            encoding="utf-8"
+        )
 
     except Exception as e:
         raise RuntimeError(f"LaTeX数式の追加中にエラーが発生しました: {e!s}") from e

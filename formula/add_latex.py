@@ -1,4 +1,4 @@
-import json
+from utils import load_ymmp_project, save_ymmp_project
 
 
 def add_latex_scene(
@@ -8,8 +8,9 @@ def add_latex_scene(
     YMM4プロジェクトに数式のシーンを追加する関数
     """
     # プロジェクトファイルを読み込む
-    with open(project_file_path, "r", encoding="utf-8") as f:
-        project_data = json.load(f)
+    project_data = load_ymmp_project(project_file_path)
+    if project_data is None:
+        return
 
     # タイムラインの最後尾の時間を取得
     last_time = 0
@@ -34,9 +35,8 @@ def add_latex_scene(
     project_data["Items"].append(image_item_template)
 
     # 新しいプロジェクトファイルとして保存
-    with open(output_file_path, "w", encoding="utf-8") as f:
-        json.dump(project_data, f, indent=2, ensure_ascii=False)
-
+    if not save_ymmp_project(project_data, output_file_path):
+        return
     print(f"シーンを追加し、{output_file_path} に保存しました。")
 
 

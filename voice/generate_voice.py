@@ -1,6 +1,6 @@
 import os
 
-from voicevox_client import VoicevoxClient
+from .voicevox_client import VoicevoxClient
 
 
 def generate_voice(speaker_name: str, text: str, speed: float = 1.0) -> str:

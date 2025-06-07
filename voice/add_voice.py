@@ -1,13 +1,14 @@
 import os
 
-from generate_voice import generate_voice
-from ymmp_templates import create_voice_item_template
-from ymmp_utils import (
+from utils import (
     get_last_frame,
     get_wav_duration_and_frames,
     load_ymmp_project,
     save_ymmp_project,
 )
+
+from .generate_voice import generate_voice
+from .ymmp_templates import create_voice_item_template
 
 
 def add_voice_scene(

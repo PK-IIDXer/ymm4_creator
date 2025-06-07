@@ -1,44 +1,62 @@
-import json
-import copy
+import os
+from ymmp_templates import create_voice_item_template
+from ymmp_utils import load_ymmp_project, get_last_frame, save_ymmp_project, get_wav_duration_and_frames
+from generate_voice import generate_voice
 
-def add_voice_scene(project_file_path, voice_file_path, output_file_path):
+def add_voice_scene(project_file, text, output_file, speaker_name="ずんだもん", speed=1.0, time_margin=1.0):
     """ 
-    YMM4プロジェクトに音声のシーンを追加する関数
+    YMM4プロジェクトに音声のシーンを追加する関数（テンプレート生成方式）
     """
+
     # プロジェクトファイルを読み込む
-    with open(project_file_path, 'r', encoding='utf-8') as f:
-        project_data = json.load(f)
+    project_data = load_ymmp_project(project_file)
+    if project_data is None:
+        return
+
+    # 音声ファイルを生成
+    voice_file_path = generate_voice(speaker_name, text, speed)
+    if not voice_file_path or not os.path.exists(voice_file_path):
+        print("音声ファイルの生成に失敗したか、ファイルが見つかりません。")
+        return
+
+    # 音声の長さを取得
+    fps = project_data.get('Timelines', [{}])[0].get('VideoInfo', {}).get('FPS', 60)
+    duration_frames, voice_length_str = get_wav_duration_and_frames(voice_file_path, fps)
 
     # タイムラインの最後尾の時間を取得
-    last_time = 0
-    if project_data['Items']:
-        last_item = project_data['Items'][-1]
-        last_time = last_item['Frame'] + last_item['PlayTime']
+    last_frame = get_last_frame(project_data)
+    
+    # 間隔を空ける
+    start_frame = last_frame + 60 * time_margin
 
-    # 音声アイテムのテンプレート
-    voice_item_template = {
-      "Frame": last_time + 60,
-      "PlayTime": 240, # 音声の長さに合わせるのが理想
-      "Layer": 2,
-      "FilePath": voice_file_path, # 引数で受け取ったパスを設定
-      "VoiceVolume": 100.0,
-      "ItemType": "Voice"
-    }
+    # 新しいボイスアイテムをテンプレートから作成し、パラメータを設定
+    new_voice_item = create_voice_item_template(speaker_name)
+    
+    # 基本情報
+    new_voice_item['Frame'] = start_frame
+    new_voice_item['Length'] = duration_frames
+    new_voice_item['Serif'] = text
+    new_voice_item['Hatsuon'] = text
+    new_voice_item['Remark'] = text
+    
+    # 音声情報
+    new_voice_item['VoiceLength'] = voice_length_str
 
     # プロジェクトデータに新しいアイテムを追加
-    project_data['Items'].append(voice_item_template)
+    project_data['Timelines'][0]['Items'].append(new_voice_item)
 
     # 新しいプロジェクトファイルとして保存
-    with open(output_file_path, 'w', encoding='utf-8') as f:
-        json.dump(project_data, f, indent=2, ensure_ascii=False)
+    if not save_ymmp_project(project_data, output_file):
+        return
+    print(f"音声シーンを追加しました: {output_file}")
 
-    print(f"シーンを追加し、{output_file_path} に保存しました。")
 
-
-# --- スクリプトの実行 ---
 if __name__ == '__main__':
-    base_project = 'D:\mimi\動画\project\シリーズ連続性\連続性022\連続性022 - コピー.ymmp'
-    voice_wav = './voices/voice_01.wav'
-    output_project = '自動生成されたプロジェクト.ymmp'
+    # テスト用
+    base_project = '連続性022 - コピー.json' 
+    serif_text = "テンプレートからアイテムを生成するのだ！"
+    output_project = '自動生成プロジェクト_v2.ymmp'
+    character = "ずんだもん"
 
-    add_voice_scene(base_project, voice_wav, output_project)
+    add_voice_scene(base_project, serif_text, output_project, speaker_name=character)
+

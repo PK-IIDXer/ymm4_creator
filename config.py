@@ -4,6 +4,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
+# 出力ディレクトリの設定
+DEFAULT_OUTPUT_DIR = Path("output")
+
 # VOICEVOXの実行ファイルのパス
 # 環境変数から取得、なければデフォルトのインストール場所を使用
 VOICEVOX_PATH = os.getenv(

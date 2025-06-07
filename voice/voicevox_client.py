@@ -52,7 +52,7 @@ class VoicevoxClient:
     def text_to_speech(
         self,
         text: str,
-        output_path: str,
+        output_path: Union[str, Path],
         speaker_id: Optional[int] = None,
         speed: float = 1.0,
     ) -> str:
@@ -61,7 +61,7 @@ class VoicevoxClient:
 
         Args:
             text (str): 変換するテキスト
-            output_path (str): 出力する音声ファイルのパス
+            output_path (Union[str, Path]): 出力する音声ファイルのパス
             speaker_id (int, optional): 話者ID。指定しない場合はデフォルト値を使用
             speed (float, optional): 話速。0.5から2.0の範囲。デフォルトは1.0
         """
@@ -94,7 +94,6 @@ class VoicevoxClient:
         # 音声ファイルの保存
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-
         output_path.write_bytes(synthesis_response.content)
 
         return str(output_path)

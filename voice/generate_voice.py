@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Union
 
 from .voicevox_client import VoicevoxClient
 
@@ -22,13 +23,13 @@ class VoiceConfig:
     speed: float = 1.0
 
 
-def generate_voice(config: VoiceConfig, output_path: str) -> str:
+def generate_voice(config: VoiceConfig, output_path: Union[str, Path]) -> str:
     """
     音声を生成する関数
 
     Args:
         config (VoiceConfig): 音声設定
-        output_path (str): 出力ファイルのパス
+        output_path (Union[str, Path]): 出力ファイルのパス
 
     Returns:
         str: 生成された音声ファイルのパス

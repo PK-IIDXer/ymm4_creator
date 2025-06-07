@@ -99,14 +99,14 @@ def add_latex(
     """
     try:
         # YMMPファイルのデータを取得
-        ymmp_path = Path(ymmp_path)
-        ymmp_data = json.loads(ymmp_path.read_text(encoding="utf-8"))
+        ymmp_path_obj = Path(ymmp_path)
+        ymmp_data = json.loads(ymmp_path_obj.read_text(encoding="utf-8"))
 
         # LaTeX数式をPNGに変換
         png_path = latex_to_png(
             latex_text,
             output_path=str(
-                ymmp_path.parent / "formulas" / f"formula_{hash(latex_text)}.png"
+                ymmp_path_obj.parent / "formulas" / f"formula_{hash(latex_text)}.png"
             ),
         )
 
@@ -120,8 +120,12 @@ def add_latex(
         ymmp_data["tracks"]["image_track"]["items"].append(image_item)
 
         # 変更を保存
-        output_path = Path(output_path or ymmp_path)
-        output_path.write_text(
+        if output_path is not None:
+            save_path = Path(output_path)
+        else:
+            save_path = ymmp_path_obj
+
+        save_path.write_text(
             json.dumps(ymmp_data, ensure_ascii=False, indent=4), encoding="utf-8"
         )
 

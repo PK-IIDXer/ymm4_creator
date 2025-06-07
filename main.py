@@ -1,19 +1,19 @@
 import argparse
 from pathlib import Path
 
-from add_latex import add_latex_scene
 from add_voice import add_voice_scene
-
 from config import DEFAULT_OUTPUT_DIR
+from formula.add_latex import add_latex_scene
 
 
-def main():
-    """ メイン関数
+def main() -> None:
+    r"""メイン関数
     # 音声を追加
     python main.py ./base.ymmp voice --text "これはテストなのだ"
 
     # 数式を追加
-    python main.py ./base.ymmp latex --formula "$e^{i\pi}=-1$""""
+    python main.py ./base.ymmp latex --formula "$e^{i\pi}=-1$"
+    """
 
     parser = argparse.ArgumentParser(
         description="YMM4プロジェクトにアイテムを自動で追加します。"

@@ -42,8 +42,8 @@ def add_voice_scene(
     # タイムラインの最後尾の時間を取得
     last_frame = get_last_frame(project_data)
 
-    # 間隔を空ける
-    start_frame = last_frame + 60 * time_margin
+    # 間隔を空ける (計算結果を整数に変換)
+    start_frame = int(last_frame + fps * time_margin)
 
     # 新しいボイスアイテムをテンプレートから作成し、パラメータを設定
     new_voice_item = create_voice_item_template(speaker_name)
@@ -69,9 +69,9 @@ def add_voice_scene(
 
 if __name__ == "__main__":
     # テスト用
-    base_project = "連続性022 - コピー.json"
-    serif_text = "テンプレートからアイテムを生成するのだ！"
-    output_project = "自動生成プロジェクト_v2.ymmp"
+    base_project = "連続性022 - コピー.ymmp"  # .json から .ymmp に変更
+    serif_text = "整数フレームで正しく配置されるのだ！"
+    output_project = "自動生成プロジェクト_v3.ymmp"
     character = "ずんだもん"
 
     add_voice_scene(base_project, serif_text, output_project, speaker_name=character)

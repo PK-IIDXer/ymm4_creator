@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
 
-from add_voice import add_voice_scene
 from config import DEFAULT_OUTPUT_DIR
 from formula.add_latex import add_latex_scene
+from voice.add_voice import VoiceSceneConfig, add_voice_scene
 
 
 def main() -> None:
@@ -41,12 +41,13 @@ def main() -> None:
 
     if args.command == "voice":
         print(f"音声アイテムを追加中: {args.text}")
-        add_voice_scene(
-            str(base_project_path),
-            args.text,
-            str(output_project_path),
+        config = VoiceSceneConfig(
+            project_file=str(base_project_path),
+            text=args.text,
+            output_file=str(output_project_path),
             speaker_name=args.speaker,
         )
+        add_voice_scene(config)
     elif args.command == "latex":
         print(f"数式アイテムを追加中: {args.formula}")
         add_latex_scene(str(base_project_path), args.formula, str(output_project_path))

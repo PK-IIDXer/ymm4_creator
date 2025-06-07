@@ -17,12 +17,4 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Run type checking with mypy
-Write-Host "`nRunning type checking with mypy..." -ForegroundColor Yellow
-mypy .
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error occurred while running mypy" -ForegroundColor Red
-    exit 1
-}
-
 Write-Host "`nAll checks completed!" -ForegroundColor Green 

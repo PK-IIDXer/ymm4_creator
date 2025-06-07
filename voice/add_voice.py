@@ -1,6 +1,7 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 # プロジェクトのルートディレクトリをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent.absolute()))
@@ -8,7 +9,6 @@ sys.path.append(str(Path(__file__).parent.parent.absolute()))
 # isort: off
 from utils import (
     get_last_frame,
-    get_wav_duration_and_frames,
     load_ymmp_project,
     save_ymmp_project,
 )
@@ -41,6 +41,51 @@ class VoiceSceneConfig:
     time_margin: float = 1.0
 
 
+def create_voice_item(
+    text: str,
+    speaker_name: str = "ずんだもん",
+    frame: int = 0,
+    length: int = 60,
+    speed: float = 1.0,
+) -> dict[str, Any]:
+    """音声アイテムを生成します。
+
+    Args:
+        text (str): 読み上げるセリフ
+        speaker_name (str, optional): 話者名. デフォルトは"ずんだもん".
+        frame (int, optional): 開始フレーム. デフォルトは0.
+        length (int, optional): 表示フレーム数. デフォルトは60.
+        speed (float, optional): 話速. デフォルトは1.0.
+
+    Returns:
+        dict: 生成された音声アイテム
+    """
+    # 音声ファイルを生成
+    voice_config = VoiceConfig(
+        text=text,
+        speaker_id=1,  # ずんだもんのデフォルトID
+        speed=speed,
+    )
+    voice_file_path = generate_voice(voice_config, "output/voice.wav")
+    if not voice_file_path or not Path(voice_file_path).exists():
+        raise RuntimeError("音声ファイルの生成に失敗したか、ファイルが見つかりません。")
+
+    # 音声アイテムを生成
+    new_voice_item = create_voice_item_template(
+        speaker_name=speaker_name,
+        frame=frame,
+        length=length,
+        file_path=str(voice_file_path),
+    )
+
+    # 基本情報を設定
+    new_voice_item["Serif"] = text
+    new_voice_item["Hatsuon"] = text
+    new_voice_item["Remark"] = text
+
+    return new_voice_item
+
+
 def add_voice_scene(config: VoiceSceneConfig) -> None:
     """
     YMM4プロジェクトに音声のシーンを追加する関数 (テンプレート生成方式)
@@ -53,22 +98,8 @@ def add_voice_scene(config: VoiceSceneConfig) -> None:
     if project_data is None:
         return
 
-    # 音声ファイルを生成
-    voice_config = VoiceConfig(
-        text=config.text,
-        speaker_id=1,  # ずんだもんのデフォルトID
-        speed=config.speed,
-    )
-    voice_file_path = generate_voice(voice_config, "output/voice.wav")
-    if not voice_file_path or not Path(voice_file_path).exists():
-        print("音声ファイルの生成に失敗したか、ファイルが見つかりません。")
-        return
-
-    # 音声の長さを取得
+    # FPSを取得
     fps = project_data.get("Timelines", [{}])[0].get("VideoInfo", {}).get("FPS", 60)
-    duration_frames, voice_length_str = get_wav_duration_and_frames(
-        voice_file_path, fps
-    )
 
     # タイムラインの最後尾の時間を取得
     last_frame = get_last_frame(project_data)
@@ -76,23 +107,13 @@ def add_voice_scene(config: VoiceSceneConfig) -> None:
     # 間隔を空ける (計算結果を整数に変換)
     start_frame = int(last_frame + fps * config.time_margin)
 
-    # 新しいボイスアイテムをテンプレートから作成し、パラメータを設定
-    new_voice_item = create_voice_item_template(
+    # 新しいボイスアイテムを生成
+    new_voice_item = create_voice_item(
+        text=config.text,
         speaker_name=config.speaker_name,
         frame=start_frame,
-        length=duration_frames,
-        file_path=voice_file_path,
+        speed=config.speed,
     )
-
-    # 基本情報
-    new_voice_item["Frame"] = start_frame
-    new_voice_item["Length"] = duration_frames
-    new_voice_item["Serif"] = config.text
-    new_voice_item["Hatsuon"] = config.text
-    new_voice_item["Remark"] = config.text
-
-    # 音声情報
-    new_voice_item["VoiceLength"] = voice_length_str
 
     # プロジェクトデータに新しいアイテムを追加
     project_data["Timelines"][0]["Items"].append(new_voice_item)

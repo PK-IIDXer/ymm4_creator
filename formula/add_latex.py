@@ -1,7 +1,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 # プロジェクトのルートディレクトリをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent.absolute()))
@@ -16,6 +16,52 @@ from utils.ymmp_templates import create_image_item_template
 from formula.latex_to_png import latex_to_png
 
 # isort: on
+
+
+def create_latex_item(
+    latex_formula: str,
+    frame: int = 0,
+    length: int = 300,  # 5秒 * 60fps
+    layer: int = 1,
+) -> dict[str, Any]:
+    """数式アイテムを生成します。
+
+    Args:
+        latex_formula (str): LaTeX形式の数式
+        frame (int, optional): 開始フレーム. デフォルトは0.
+        length (int, optional): 表示フレーム数. デフォルトは300.
+        layer (int, optional): レイヤー番号. デフォルトは1.
+
+    Returns:
+        dict: 生成された数式アイテム
+    """
+    # 出力先のディレクトリが存在しない場合は作成
+    output_dir = Path("output") / "formulas"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 衝突を避けるためにファイル名にハッシュ値などを使うとより安全
+    formula_image_filename = f"formula_{hash(latex_formula)}.png"
+    formula_image_path = output_dir / formula_image_filename
+
+    # LaTeX数式をPNG画像に変換
+    try:
+        # YMM4が確実にパスを解決できるよう、絶対パスに変換する
+        abs_formula_image_path = str(formula_image_path.absolute())
+        latex_to_png(latex_formula, abs_formula_image_path)
+    except Exception as e:
+        raise RuntimeError(f"数式の画像変換に失敗しました: {e}") from e
+
+    # 画像アイテムをテンプレートから作成
+    new_image_item = create_image_item_template()
+
+    # パラメータを設定
+    new_image_item["Frame"] = frame
+    new_image_item["Length"] = length
+    new_image_item["Layer"] = layer
+    new_image_item["FilePath"] = abs_formula_image_path
+    new_image_item["Remark"] = latex_formula
+
+    return new_image_item
 
 
 def add_latex_scene(
@@ -33,24 +79,6 @@ def add_latex_scene(
     if project_data is None:
         return
 
-    # 出力先のディレクトリが存在しない場合は作成
-    output_path = Path(output_file_path)
-    output_dir = output_path.parent / "formulas"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # 衝突を避けるためにファイル名にハッシュ値などを使うとより安全
-    formula_image_filename = f"formula_{hash(latex_formula)}.png"
-    formula_image_path = output_dir / formula_image_filename
-
-    # LaTeX数式をPNG画像に変換
-    try:
-        # YMM4が確実にパスを解決できるよう、絶対パスに変換する
-        abs_formula_image_path = str(formula_image_path.absolute())
-        latex_to_png(latex_formula, abs_formula_image_path)
-    except Exception as e:
-        print(f"数式の画像変換に失敗しました: {e}")
-        return
-
     # FPSを取得
     fps = project_data.get("Timelines", [{}])[0].get("VideoInfo", {}).get("FPS", 60)
 
@@ -61,23 +89,20 @@ def add_latex_scene(
     start_frame = int(last_frame + fps * time_margin_sec)
     duration_frames = int(fps * duration_sec)
 
-    # 画像アイテムをテンプレートから作成
-    new_image_item = create_image_item_template()
-
-    # パラメータを設定
-    new_image_item["Frame"] = start_frame
-    new_image_item["Length"] = duration_frames
-    new_image_item["Layer"] = 1  # 必要に応じてレイヤーを調整
-    new_image_item["FilePath"] = abs_formula_image_path  # 絶対パスを設定
-    new_image_item["Remark"] = latex_formula  # 備考に数式を入れておくと便利
+    # 新しい数式アイテムを生成
+    new_image_item = create_latex_item(
+        latex_formula=latex_formula,
+        frame=start_frame,
+        length=duration_frames,
+    )
 
     # プロジェクトデータに新しいアイテムを追加
     project_data["Timelines"][0]["Items"].append(new_image_item)
 
     # 新しいプロジェクトファイルとして保存
-    if not save_ymmp_project(project_data, str(output_path)):
+    if not save_ymmp_project(project_data, str(output_file_path)):
         return
-    print(f"LaTeXシーンを追加し、{output_path} に保存しました。")
+    print(f"LaTeXシーンを追加し、{output_file_path} に保存しました。")
 
 
 def add_latex(

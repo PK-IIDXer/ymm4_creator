@@ -11,8 +11,6 @@ import requests
 # プロジェクトのルートディレクトリをPythonパスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from formula.latex_to_png import latex_to_png
-
 
 def get_latex_env_path() -> Path:
     """
@@ -193,6 +191,8 @@ def build_latex(
     Returns:
         str: 出力ファイルのパス
     """
+    from .latex_to_png import latex_to_png
+
     # LaTeX数式をPNGに変換
     return latex_to_png(
         formula=formula,

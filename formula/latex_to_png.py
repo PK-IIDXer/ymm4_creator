@@ -5,7 +5,15 @@ from typing import Optional
 
 from pdf2image import convert_from_path
 
-from .build_latex import get_latex_env_path
+
+def get_latex_env_path() -> Path:
+    """
+    LaTeX環境のパスを取得する関数
+
+    Returns:
+        Path: LaTeX環境のパス
+    """
+    return Path(__file__).parent / "latex_bin"
 
 
 def get_pdflatex_command() -> Path:

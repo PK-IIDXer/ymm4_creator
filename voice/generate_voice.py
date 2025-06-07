@@ -33,6 +33,11 @@ def generate_voice(config: VoiceConfig, output_path: str) -> str:
     Returns:
         str: 生成された音声ファイルのパス
     """
+    # 出力ディレクトリの作成
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     # 音声生成
     client = VoicevoxClient()
 

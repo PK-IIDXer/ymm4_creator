@@ -3,7 +3,7 @@ import os
 from voicevox_client import VoicevoxClient
 
 
-def generate_voice(speaker_name, text, speed=1.0):
+def generate_voice(speaker_name: str, text: str, speed: float = 1.0) -> str:
     """
     指定された話者とテキストで音声を生成する関数
 
@@ -41,7 +41,7 @@ def generate_voice(speaker_name, text, speed=1.0):
     return output_path
 
 
-def main():
+def main() -> None:
     # VOICEVOXクライアントの初期化
     client = VoicevoxClient()
 

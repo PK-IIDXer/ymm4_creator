@@ -11,13 +11,13 @@ from ymmp_utils import (
 
 
 def add_voice_scene(
-    project_file,
-    text,
-    output_file,
-    speaker_name="ずんだもん",
-    speed=1.0,
-    time_margin=1.0,
-):
+    project_file: str,
+    text: str,
+    output_file: str,
+    speaker_name: str = "ずんだもん",
+    speed: float = 1.0,
+    time_margin: float = 1.0,
+) -> None:
     """
     YMM4プロジェクトに音声のシーンを追加する関数（テンプレート生成方式）
     """

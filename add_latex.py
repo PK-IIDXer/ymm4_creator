@@ -1,7 +1,9 @@
 import json
 
 
-def add_latex_scene(project_file_path, formula_image_path, output_file_path):
+def add_latex_scene(
+    project_file_path: str, formula_image_path: str, output_file_path: str
+) -> None:
     """
     YMM4プロジェクトに数式のシーンを追加する関数
     """

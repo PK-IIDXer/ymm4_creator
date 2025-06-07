@@ -1,8 +1,9 @@
 import json
 import wave
+from typing import Any, Dict, Optional, Tuple
 
 
-def load_ymmp_project(project_file):
+def load_ymmp_project(project_file: str) -> Optional[Dict[str, Any]]:
     """
     YMM4プロジェクトファイルを読み込む関数
 
@@ -14,7 +15,7 @@ def load_ymmp_project(project_file):
     """
     try:
         with open(project_file, "r", encoding="utf-8-sig") as f:
-            project_data = json.load(f)
+            project_data: Dict[str, Any] = json.load(f)
         return project_data
     except FileNotFoundError:
         print(f"エラー: プロジェクトファイル '{project_file}' が見つかりません。")
@@ -26,7 +27,7 @@ def load_ymmp_project(project_file):
         return None
 
 
-def get_last_frame(project_data):
+def get_last_frame(project_data: Dict[str, Any]) -> int:
     """
     プロジェクトのタイムラインの最後尾のフレーム位置を取得する関数
 
@@ -45,7 +46,7 @@ def get_last_frame(project_data):
     return last_frame
 
 
-def save_ymmp_project(project_data, output_file):
+def save_ymmp_project(project_data: Dict[str, Any], output_file: str) -> bool:
     """
     YMM4プロジェクトファイルを保存する関数
 
@@ -66,7 +67,7 @@ def save_ymmp_project(project_data, output_file):
         return False
 
 
-def get_wav_duration_and_frames(wav_path, fps=60):
+def get_wav_duration_and_frames(wav_path: str, fps: int = 60) -> Tuple[int, str]:
     """
     wavファイルの再生時間をフレーム数と秒数で取得する関数
     """

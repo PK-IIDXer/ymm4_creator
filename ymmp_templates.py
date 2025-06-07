@@ -1,12 +1,13 @@
 import uuid
+from typing import Any, Dict
 
 
-def create_voice_item_template(speaker_name="ずんだもん"):
+def create_voice_item_template(speaker_name: str = "ずんだもん") -> Dict[str, Any]:
     """
     YMM4のボイスアイテムの基本的なテンプレートをゼロから生成する関数
     """
     # 正常なymmpファイルから抽出した、ボイスアイテムに必要な全フィールドの構造
-    template = {
+    template: Dict[str, Any] = {
         "$type": "YukkuriMovieMaker.Project.Items.VoiceItem, YukkuriMovieMaker",
         "CharacterName": speaker_name,
         "Serif": "（セリフ）",

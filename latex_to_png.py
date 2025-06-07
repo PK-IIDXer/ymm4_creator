@@ -7,7 +7,7 @@ from pylatex import Command, Document
 from pylatex.utils import NoEscape
 
 
-def latex_to_png(formula, output_path, dpi=300):
+def latex_to_png(formula: str, output_path: str, dpi: int = 300) -> None:
     """
     LaTeX数式を透過PNG画像に変換する関数
 

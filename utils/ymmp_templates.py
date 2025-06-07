@@ -1,5 +1,6 @@
+import json
 import uuid
-from typing import Any, Dict, TypedDict
+from typing import Any, Optional, TypedDict
 
 
 class VoiceItemTemplate(TypedDict):
@@ -18,22 +19,28 @@ class VoiceItemTemplate(TypedDict):
     VoiceLength: str
 
 
+class YMMPTemplate(TypedDict):
+    project_name: str
+    project_path: str
+    template_data: dict[str, Any]
+
+
 def create_voice_item_template(
     speaker_name: str = "ずんだもん",
     frame: int = 0,
     length: int = 60,
     file_path: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     YMM4のボイスアイテムの基本的なテンプレートをゼロから生成する関数
     """
     # 正常なymmpファイルから抽出した、ボイスアイテムに必要な全フィールドの構造
-    template: Dict[str, Any] = {
+    template: dict[str, Any] = {
         "$type": "YukkuriMovieMaker.Project.Items.VoiceItem, YukkuriMovieMaker",
         "CharacterName": speaker_name,
-        "Serif": "（セリフ）",
+        "Serif": "(セリフ)",
         "Pronounce": None,
-        "Hatsuon": "（セリフ）",
+        "Hatsuon": "(セリフ)",
         "VoiceLength": "00:00:00.0000000",
         "VoiceCache": None,
         "PlaySpeed": 100.0,
@@ -70,11 +77,11 @@ def create_voice_item_template(
     return template
 
 
-def create_image_item_template() -> Dict[str, Any]:
+def create_image_item_template() -> dict[str, Any]:
     """
     YMM4の画像アイテムの基本的なテンプレートをゼロから生成する関数
     """
-    template: Dict[str, Any] = {
+    template: dict[str, Any] = {
         "$type": "YukkuriMovieMaker.Project.Items.ImageItem, YukkuriMovieMaker",
         "FilePath": "",
         "X": {"Values": [{"Value": 0.0}], "Span": 0.0, "Centering": "None"},
@@ -105,3 +112,83 @@ def create_image_item_template() -> Dict[str, Any]:
         "Transitions": [],
     }
     return template
+
+
+def create_ymmp_template(
+    project_name: str,
+    project_path: str,
+    template_data: dict[str, Any],
+    output_path: Optional[str] = None,
+) -> None:
+    """
+    YMMPテンプレートを作成する関数
+
+    Args:
+        project_name (str): プロジェクト名
+        project_path (str): プロジェクトのパス
+        template_data (dict[str, Any]): テンプレートデータ
+        output_path (Optional[str]): 出力パス (デフォルト: None)
+    """
+    template: YMMPTemplate = {
+        "project_name": project_name,
+        "project_path": project_path,
+        "template_data": template_data,
+    }
+
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(template, f, ensure_ascii=False, indent=4)
+
+
+def create_ymmp_template_from_json(
+    json_path: str, output_path: Optional[str] = None
+) -> None:
+    """
+    JSONファイルからYMMPテンプレートを作成する関数
+
+    Args:
+        json_path (str): JSONファイルのパス
+        output_path (Optional[str]): 出力パス (デフォルト: None)
+    """
+    with open(json_path, encoding="utf-8") as f:
+        template_data = json.load(f)
+
+    create_ymmp_template(
+        template_data["project_name"],
+        template_data["project_path"],
+        template_data["template_data"],
+        output_path,
+    )
+
+
+def create_ymmp_template_from_dict(
+    project_name: str,
+    project_path: str,
+    template_data: dict[str, Any],
+    output_path: Optional[str] = None,
+) -> str:
+    """
+    辞書データからYMMPテンプレートを作成する関数
+
+    Args:
+        project_name (str): プロジェクト名
+        project_path (str): プロジェクトのパス
+        template_data (dict[str, Any]): テンプレートデータ
+        output_path (Optional[str]): 出力パス (デフォルト: None)
+
+    Returns:
+        str: 作成されたテンプレートのJSON文字列
+    """
+    template: YMMPTemplate = {
+        "project_name": project_name,
+        "project_path": project_path,
+        "template_data": template_data,
+    }
+
+    json_str = json.dumps(template, ensure_ascii=False, indent=4)
+
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(json_str)
+
+    return json_str

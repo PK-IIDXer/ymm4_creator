@@ -1,41 +1,65 @@
 import os
 import sys
+from dataclasses import dataclass
 
 # プロジェクトのルートディレクトリをPythonパスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # isort: off
-from utils import (  # noqa: E402
+from utils import (
     get_last_frame,
     get_wav_duration_and_frames,
     load_ymmp_project,
     save_ymmp_project,
 )
-from utils.ymmp_templates import create_voice_item_template  # noqa: E402
-from voice.generate_voice import generate_voice  # noqa: E402
+from utils.ymmp_templates import create_voice_item_template
+from voice.generate_voice import generate_voice, VoiceConfig
+from voice.voicevox_client import VoicevoxClient
 
 # isort: on
 
 
-def add_voice_scene(
-    project_file: str,
-    text: str,
-    output_file: str,
-    speaker_name: str = "ずんだもん",
-    speed: float = 1.0,
-    time_margin: float = 1.0,
-) -> None:
+@dataclass
+class VoiceSceneConfig:
     """
-    YMM4プロジェクトに音声のシーンを追加する関数（テンプレート生成方式）
+    音声シーン設定を保持するデータクラス
+
+    Attributes:
+        project_file (str): プロジェクトファイルのパス
+        text (str): 音声化するテキスト
+        output_file (str): 出力ファイルのパス
+        speaker_name (str): 話者名
+        speed (float): 話速
+        time_margin (float): 時間マージン
     """
 
+    project_file: str
+    text: str
+    output_file: str
+    speaker_name: str = "ずんだもん"
+    speed: float = 1.0
+    time_margin: float = 1.0
+
+
+def add_voice_scene(config: VoiceSceneConfig) -> None:
+    """
+    YMM4プロジェクトに音声のシーンを追加する関数 (テンプレート生成方式)
+
+    Args:
+        config (VoiceSceneConfig): 音声シーン設定
+    """
     # プロジェクトファイルを読み込む
-    project_data = load_ymmp_project(project_file)
+    project_data = load_ymmp_project(config.project_file)
     if project_data is None:
         return
 
     # 音声ファイルを生成
-    voice_file_path = generate_voice(speaker_name, text, speed)
+    voice_config = VoiceConfig(
+        text=config.text,
+        speaker_id=1,  # ずんだもんのデフォルトID
+        speed=config.speed,
+    )
+    voice_file_path = generate_voice(voice_config, "output/voice.wav")
     if not voice_file_path or not os.path.exists(voice_file_path):
         print("音声ファイルの生成に失敗したか、ファイルが見つかりません。")
         return
@@ -50,11 +74,11 @@ def add_voice_scene(
     last_frame = get_last_frame(project_data)
 
     # 間隔を空ける (計算結果を整数に変換)
-    start_frame = int(last_frame + fps * time_margin)
+    start_frame = int(last_frame + fps * config.time_margin)
 
     # 新しいボイスアイテムをテンプレートから作成し、パラメータを設定
     new_voice_item = create_voice_item_template(
-        speaker_name=speaker_name,
+        speaker_name=config.speaker_name,
         frame=start_frame,
         length=duration_frames,
         file_path=voice_file_path,
@@ -63,9 +87,9 @@ def add_voice_scene(
     # 基本情報
     new_voice_item["Frame"] = start_frame
     new_voice_item["Length"] = duration_frames
-    new_voice_item["Serif"] = text
-    new_voice_item["Hatsuon"] = text
-    new_voice_item["Remark"] = text
+    new_voice_item["Serif"] = config.text
+    new_voice_item["Hatsuon"] = config.text
+    new_voice_item["Remark"] = config.text
 
     # 音声情報
     new_voice_item["VoiceLength"] = voice_length_str
@@ -74,16 +98,50 @@ def add_voice_scene(
     project_data["Timelines"][0]["Items"].append(new_voice_item)
 
     # 新しいプロジェクトファイルとして保存
-    if not save_ymmp_project(project_data, output_file):
+    if not save_ymmp_project(project_data, config.output_file):
         return
-    print(f"音声シーンを追加しました: {output_file}")
+    print(f"音声シーンを追加しました: {config.output_file}")
+
+
+def add_voice(config: VoiceConfig, output_path: str) -> None:
+    """
+    YMMPファイルに音声を追加する関数
+
+    Args:
+        config (VoiceConfig): 音声設定
+        output_path (str): 出力ファイルのパス
+    """
+    # 音声生成
+    client = VoicevoxClient()
+
+    # 音声合成クエリの取得
+    audio_query = client.get_audio_query_with_emotion_and_style(
+        text=config.text,
+        speaker_id=config.speaker_id,
+        emotion=config.emotion,
+        style=config.style,
+    )
+
+    # クエリのパラメータを設定
+    audio_query["speedScale"] = config.speed
+    audio_query["volumeScale"] = config.volume
+    audio_query["intonationScale"] = config.intonation
+    audio_query["pitchScale"] = config.pitch
+
+    # 音声の合成
+    audio_data = client.synthesize_audio(audio_query, config.speaker_id)
+
+    # 音声ファイルの保存
+    with open(output_path, "wb") as f:
+        f.write(audio_data)
 
 
 if __name__ == "__main__":
     # テスト用
-    base_project = "連続性022 - コピー.ymmp"  # .json から .ymmp に変更
-    serif_text = "整数フレームで正しく配置されるのだ！"
-    output_project = "自動生成プロジェクト_v3.ymmp"
-    character = "ずんだもん"
-
-    add_voice_scene(base_project, serif_text, output_project, speaker_name=character)
+    config = VoiceSceneConfig(
+        project_file="連続性022 - コピー.ymmp",
+        text="整数フレームで正しく配置されるのだ!",
+        output_file="自動生成プロジェクト_v3.ymmp",
+        speaker_name="ずんだもん",
+    )
+    add_voice_scene(config)

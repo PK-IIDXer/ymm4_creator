@@ -1,9 +1,10 @@
+# ruff: noqa: RUF002
 import json
 import wave
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 
-def load_ymmp_project(project_file: str) -> Optional[Dict[str, Any]]:
+def load_ymmp_project(project_file: str) -> Optional[dict[str, Any]]:
     """
     YMM4プロジェクトファイルを読み込む関数
 
@@ -14,8 +15,8 @@ def load_ymmp_project(project_file: str) -> Optional[Dict[str, Any]]:
         dict: プロジェクトデータ。エラーの場合はNone
     """
     try:
-        with open(project_file, "r", encoding="utf-8-sig") as f:
-            project_data: Dict[str, Any] = json.load(f)
+        with open(project_file, encoding="utf-8-sig") as f:
+            project_data: dict[str, Any] = json.load(f)
         return project_data
     except FileNotFoundError:
         print(f"エラー: プロジェクトファイル '{project_file}' が見つかりません。")
@@ -27,7 +28,7 @@ def load_ymmp_project(project_file: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def get_last_frame(project_data: Dict[str, Any]) -> int:
+def get_last_frame(project_data: dict[str, Any]) -> int:
     """
     プロジェクトのタイムラインの最後尾のフレーム位置を取得する関数
 
@@ -46,7 +47,7 @@ def get_last_frame(project_data: Dict[str, Any]) -> int:
     return last_frame
 
 
-def save_ymmp_project(project_data: Dict[str, Any], output_file: str) -> bool:
+def save_ymmp_project(project_data: dict[str, Any], output_file: str) -> bool:
     """
     YMM4プロジェクトファイルを保存する関数
 
@@ -67,7 +68,7 @@ def save_ymmp_project(project_data: Dict[str, Any], output_file: str) -> bool:
         return False
 
 
-def get_wav_duration_and_frames(wav_path: str, fps: int = 60) -> Tuple[int, str]:
+def get_wav_duration_and_frames(wav_path: str, fps: int = 60) -> tuple[int, str]:
     """
     wavファイルの再生時間をフレーム数と秒数で取得する関数
     """
@@ -83,3 +84,75 @@ def get_wav_duration_and_frames(wav_path: str, fps: int = 60) -> Tuple[int, str]
     except Exception as e:
         print(f"Error reading WAV file {wav_path}: {e}")
         return 0, "00:00:00.0000000"
+
+
+def get_ymmp_data(ymmp_path: str) -> dict[str, Any]:
+    """
+    YMMPファイルのデータを取得する関数
+
+    Args:
+        ymmp_path (str): YMMPファイルのパス
+
+    Returns:
+        dict[str, Any]: YMMPファイルのデータ
+    """
+    with open(ymmp_path, encoding="utf-8") as f:
+        return dict(json.load(f))
+
+
+def get_ymmp_metadata(ymmp_path: str) -> dict[str, Any]:
+    """
+    YMMPファイルのメタデータを取得する関数
+
+    Args:
+        ymmp_path (str): YMMPファイルのパス
+
+    Returns:
+        dict[str, Any]: YMMPファイルのメタデータ
+    """
+    data = get_ymmp_data(ymmp_path)
+    return dict(data.get("metadata", {}))
+
+
+def get_ymmp_tracks(ymmp_path: str) -> dict[str, Any]:
+    """
+    YMMPファイルのトラック情報を取得する関数
+
+    Args:
+        ymmp_path (str): YMMPファイルのパス
+
+    Returns:
+        dict[str, Any]: YMMPファイルのトラック情報
+    """
+    data = get_ymmp_data(ymmp_path)
+    return dict(data.get("tracks", {}))
+
+
+def get_ymmp_track_data(ymmp_path: str, track_id: str) -> dict[str, Any]:
+    """
+    YMMPファイルの特定のトラックのデータを取得する関数
+
+    Args:
+        ymmp_path (str): YMMPファイルのパス
+        track_id (str): トラックID
+
+    Returns:
+        dict[str, Any]: トラックのデータ
+    """
+    tracks = get_ymmp_tracks(ymmp_path)
+    return dict(tracks.get(track_id, {}))
+
+
+def get_ymmp_track_notes(ymmp_path: str, track_id: str) -> tuple[Any, ...]:
+    """
+    YMMPファイルの特定のトラックのノート情報を取得する関数
+
+    Args:
+        ymmp_path (str): YMMPファイルのパス
+        track_id (str): トラックID
+
+    Returns:
+        tuple[Any, ...]: ノート情報のタプル
+    """
+    track_data = get_ymmp_track_data(ymmp_path, track_id)
+    return tuple(track_data.get("notes", []))

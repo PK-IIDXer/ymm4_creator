@@ -1,2 +1,4 @@
 pylatex>=1.4.1
-requests>=2.31.0 
+PyMuPDF>=1.23.8
+Pillow>=10.2.0
+requests>=2.31.0  # LaTeX環境のダウンロード用 

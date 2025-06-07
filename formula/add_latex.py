@@ -15,39 +15,9 @@ from utils import (
     save_ymmp_project,
 )
 from utils.ymmp_templates import create_image_item_template
-from formula.latex_to_png import latex_to_png, get_latex_env_path
+from formula.latex_to_png import latex_to_png
 
 # isort: on
-
-
-def ensure_latex_env() -> None:
-    """
-    LaTeX環境が存在しない場合、自動的にビルドする
-    """
-    env_path = get_latex_env_path()
-    if env_path is None:
-        raise RuntimeError("LaTeX環境のパスを取得できませんでした。")
-
-    latex_env_path = Path(env_path)
-    if not latex_env_path.exists():
-        print("LaTeX環境が見つかりません。自動的にビルドを開始します...")
-
-        # build_latex.pyのパスを取得
-        build_script = os.path.join(os.path.dirname(__file__), "build_latex.py")
-
-        # build_latex.pyを実行
-        try:
-            subprocess.run([sys.executable, build_script], check=True)
-            print("LaTeX環境のビルドが完了しました。")
-        except subprocess.CalledProcessError as e:
-            print(f"LaTeX環境のビルドに失敗しました: {e}")
-            raise RuntimeError("LaTeX環境のビルドに失敗しました。") from e
-
-        # ビルド後の環境を確認
-        if not latex_env_path.exists():
-            raise RuntimeError(
-                "LaTeX環境のビルドは完了しましたが、環境が見つかりません。"
-            )
 
 
 def add_latex_scene(
@@ -60,9 +30,6 @@ def add_latex_scene(
     """
     YMM4プロジェクトに数式のシーンを追加する関数
     """
-    # LaTeX環境の確認と自動ビルド
-    ensure_latex_env()
-
     # プロジェクトファイルを読み込む
     project_data = load_ymmp_project(project_file_path)
     if project_data is None:

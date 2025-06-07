@@ -86,31 +86,6 @@ def create_latex_env_structure(bin_dir: str) -> None:
         )
 
 
-def download_miktex() -> Path:
-    """
-    MiKTeXをダウンロードする関数
-
-    Returns:
-        Path: ダウンロードしたファイルのパス
-    """
-    url = "https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-x64-5.0.0.exe"
-    output_path = get_latex_env_path() / "miktex-setup.exe"
-    download_file(url, output_path)
-    return output_path
-
-
-def install_miktex(setup_path: Path) -> None:
-    """
-    MiKTeXをインストールする関数
-
-    Args:
-        setup_path (Path): セットアップファイルのパス
-    """
-    subprocess.run(
-        [str(setup_path), "--unattended", "--install-actions=install"], check=True
-    )
-
-
 def download_texlive() -> Path:
     """
     TeX Liveをダウンロードする関数
@@ -118,8 +93,11 @@ def download_texlive() -> Path:
     Returns:
         Path: ダウンロードしたファイルのパス
     """
-    url = "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
-    output_path = get_latex_env_path() / "texlive.tar.gz"
+    if platform.system().lower() == "windows":
+        url = "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-windows.exe"
+    else:
+        url = "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
+    output_path = get_latex_env_path() / "texlive-installer.exe" if platform.system().lower() == "windows" else get_latex_env_path() / "texlive.tar.gz"
     download_file(url, output_path)
     return output_path
 
@@ -131,13 +109,64 @@ def install_texlive(archive_path: Path) -> None:
     Args:
         archive_path (Path): アーカイブファイルのパス
     """
-    # アーカイブを展開
-    with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(path=get_latex_env_path())
+    print("=== TeX Liveインストール開始 ===")
+    print(f"インストーラーのパス: {archive_path}")
+    print(f"インストーラーの存在確認: {archive_path.exists()}")
 
-    # インストールスクリプトを実行
-    install_script = next(get_latex_env_path().glob("install-tl-*/install-tl"))
-    subprocess.run([str(install_script), "--no-interaction"], check=True)
+    if platform.system().lower() == "windows":
+        # Windows用のインストール処理
+        install_dir = get_latex_env_path() / "texlive"
+        install_dir.mkdir(parents=True, exist_ok=True)
+        print(f"インストール先ディレクトリ: {install_dir}")
+        
+        # インストールコマンドを実行
+        cmd = [
+            str(archive_path),
+            "--no-interaction",
+            "--portable",
+            f"--install-dir={str(install_dir)}",
+            "--scheme=basic",  # 最小限のインストール
+            "--binary-platform=win32",
+            "--paper=a4",
+            "--texdir=texmf-dist",
+            "--texmflocal=texmf-local",
+            "--texmfvar=texmf-var",
+            "--texmfconfig=texmf-config"
+        ]
+        print(f"実行コマンド: {' '.join(cmd)}")
+        
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            print("インストールコマンドの出力:")
+            print(result.stdout)
+        except subprocess.CalledProcessError as e:
+            print("インストールエラー:")
+            print(e.stderr)
+            raise
+
+        # インストール後の確認
+        pdflatex_path = install_dir / "bin" / "win32" / "pdflatex.exe"
+        print(f"pdflatexのパス: {pdflatex_path}")
+        print(f"pdflatexの存在確認: {pdflatex_path.exists()}")
+        
+        if not pdflatex_path.exists():
+            raise RuntimeError("TeX Liveのインストールは完了しましたが、pdflatexが見つかりません。")
+
+    else:
+        # Unix用のインストール処理
+        with tarfile.open(archive_path, "r:gz") as tar:
+            tar.extractall(path=get_latex_env_path())
+
+        # インストールスクリプトを実行
+        install_script = next(get_latex_env_path().glob("install-tl-*/install-tl"))
+        subprocess.run([
+            str(install_script),
+            "--no-interaction",
+            "--scheme=basic",
+            f"--prefix={str(get_latex_env_path() / 'texlive')}"
+        ], check=True)
+
+    print("=== TeX Liveインストール完了 ===")
 
 
 def build_latex_env() -> None:
@@ -150,8 +179,8 @@ def build_latex_env() -> None:
 
     # プラットフォームに応じたインストール処理
     if platform.system().lower() == "windows":
-        setup_path = download_miktex()
-        install_miktex(setup_path)
+        archive_path = download_texlive()
+        install_texlive(archive_path)
     else:
         archive_path = download_texlive()
         install_texlive(archive_path)
@@ -168,7 +197,7 @@ def get_latex_env() -> dict[str, str]:
     env = os.environ.copy()
 
     if platform.system().lower() == "windows":
-        env["PATH"] = f"{latex_env_path / 'miktex' / 'bin' / 'x64'};{env['PATH']}"
+        env["PATH"] = f"{latex_env_path / 'texlive' / 'bin' / 'win32'};{env['PATH']}"
     else:
         env["PATH"] = f"{latex_env_path / 'texlive' / 'bin'}:{env['PATH']}"
 

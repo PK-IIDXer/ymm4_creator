@@ -1,14 +1,20 @@
 import os
+import sys
 
-from utils import (
+# プロジェクトのルートディレクトリをPythonパスに追加
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# isort: off
+from utils import (  # noqa: E402
     get_last_frame,
     get_wav_duration_and_frames,
     load_ymmp_project,
     save_ymmp_project,
 )
+from utils.ymmp_templates import create_voice_item_template  # noqa: E402
+from voice.generate_voice import generate_voice  # noqa: E402
 
-from .generate_voice import generate_voice
-from .ymmp_templates import create_voice_item_template
+# isort: on
 
 
 def add_voice_scene(
@@ -47,7 +53,12 @@ def add_voice_scene(
     start_frame = int(last_frame + fps * time_margin)
 
     # 新しいボイスアイテムをテンプレートから作成し、パラメータを設定
-    new_voice_item = create_voice_item_template(speaker_name)
+    new_voice_item = create_voice_item_template(
+        speaker_name=speaker_name,
+        frame=start_frame,
+        length=duration_frames,
+        file_path=voice_file_path,
+    )
 
     # 基本情報
     new_voice_item["Frame"] = start_frame

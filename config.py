@@ -1,7 +1,7 @@
 import os
 import platform
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
 
 # VOICEVOXの実行ファイルのパス
@@ -35,6 +35,7 @@ def get_latex_env_path() -> Path:
     print("TeX Live環境が見つかりません。インストールを開始します...")
     # 動的にインポート
     from formula.build_latex import build_latex_env
+
     build_latex_env()
 
     # インストール後のパスを再確認
@@ -81,19 +82,21 @@ def get_imagemagick_path() -> str:
     ImageMagickのパスを取得する関数
     """
     # まず環境変数PATHから探す
-    magick_path = shutil.which('magick')
+    magick_path = shutil.which("magick")
     if magick_path is not None:
         return magick_path
 
     # Windowsの場合、一般的なインストール場所を確認
     if platform.system().lower() == "windows":
         possible_paths = [
-            Path(r'C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe'),
-            Path(r'C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe'),
-            Path(r'C:\Program Files (x86)\ImageMagick-7.1.1-Q16\magick.exe')
+            Path(r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"),
+            Path(r"C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe"),
+            Path(r"C:\Program Files (x86)\ImageMagick-7.1.1-Q16\magick.exe"),
         ]
         for path in possible_paths:
             if path.exists():
                 return str(path)
 
-    raise FileNotFoundError('ImageMagickが見つかりません。インストールされているか確認してください。')
+    raise FileNotFoundError(
+        "ImageMagickが見つかりません。インストールされているか確認してください。"
+    )

@@ -83,7 +83,7 @@ def create_latex_env_structure(bin_dir: str) -> None:
 
 この環境は完全に自己完結しており、システムのLaTeX環境に依存しません。
 """,
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
 
@@ -98,7 +98,11 @@ def download_texlive() -> Path:
         url = "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-windows.exe"
     else:
         url = "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
-    output_path = get_latex_env_path() / "texlive-installer.exe" if platform.system().lower() == "windows" else get_latex_env_path() / "texlive.tar.gz"
+    output_path = (
+        get_latex_env_path() / "texlive-installer.exe"
+        if platform.system().lower() == "windows"
+        else get_latex_env_path() / "texlive.tar.gz"
+    )
     download_file(url, output_path)
     return output_path
 
@@ -119,23 +123,23 @@ def install_texlive(archive_path: Path) -> None:
         install_dir = get_latex_env_path() / "texlive"
         install_dir.mkdir(parents=True, exist_ok=True)
         print(f"インストール先ディレクトリ: {install_dir}")
-        
+
         # インストールコマンドを実行
         cmd = [
             str(archive_path),
             "--no-interaction",
             "--portable",
-            f"--install-dir={str(install_dir)}",
+            f"--install-dir={install_dir!s}",
             "--scheme=basic",  # 最小限のインストール
             "--binary-platform=win32",
             "--paper=a4",
             "--texdir=texmf-dist",
             "--texmflocal=texmf-local",
             "--texmfvar=texmf-var",
-            "--texmfconfig=texmf-config"
+            "--texmfconfig=texmf-config",
         ]
         print(f"実行コマンド: {' '.join(cmd)}")
-        
+
         try:
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
             print("インストールコマンドの出力:")
@@ -149,9 +153,11 @@ def install_texlive(archive_path: Path) -> None:
         pdflatex_path = install_dir / "bin" / "win32" / "pdflatex.exe"
         print(f"pdflatexのパス: {pdflatex_path}")
         print(f"pdflatexの存在確認: {pdflatex_path.exists()}")
-        
+
         if not pdflatex_path.exists():
-            raise RuntimeError("TeX Liveのインストールは完了しましたが、pdflatexが見つかりません。")
+            raise RuntimeError(
+                "TeX Liveのインストールは完了しましたが、pdflatexが見つかりません。"
+            )
 
     else:
         # Unix用のインストール処理
@@ -160,12 +166,15 @@ def install_texlive(archive_path: Path) -> None:
 
         # インストールスクリプトを実行
         install_script = next(get_latex_env_path().glob("install-tl-*/install-tl"))
-        subprocess.run([
-            str(install_script),
-            "--no-interaction",
-            "--scheme=basic",
-            f"--prefix={str(get_latex_env_path() / 'texlive')}"
-        ], check=True)
+        subprocess.run(
+            [
+                str(install_script),
+                "--no-interaction",
+                "--scheme=basic",
+                f"--prefix={get_latex_env_path() / 'texlive'!s}",
+            ],
+            check=True,
+        )
 
     print("=== TeX Liveインストール完了 ===")
 

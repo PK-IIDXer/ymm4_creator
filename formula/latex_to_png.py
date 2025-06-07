@@ -1,11 +1,10 @@
+import os
 import platform
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import os
-import shutil
 
-from pdf2image import convert_from_path
 from config import get_imagemagick_path
 
 
@@ -23,7 +22,9 @@ def get_pdflatex_command() -> str:
         return "pdflatex"
 
 
-def create_latex_document(text: str, font_size: int = 12, text_color: str = "white") -> str:
+def create_latex_document(
+    text: str, font_size: int = 12, text_color: str = "white"
+) -> str:
     """
     LaTeXドキュメントを作成する関数
 
@@ -66,27 +67,28 @@ def run_pdflatex(pdflatex_cmd: str, tex_file: Path) -> Path:
         original_dir = Path.cwd()
         # TeXファイルのあるディレクトリに移動
         os.chdir(tex_file.parent)
-        
+
         result = subprocess.run(
             [pdflatex_cmd, "-interaction=nonstopmode", tex_file.name],
             capture_output=True,
-            text=True
+            text=True,
+            check=False,
         )
         print("コマンドの出力:")
         print(result.stdout)
         if result.stderr:
             print("警告/エラー出力:")
             print(result.stderr)
-        
+
         # PDFファイルが生成されているか確認
         pdf_file = tex_file.with_suffix(".pdf")
         if not pdf_file.exists():
             raise RuntimeError("PDFファイルが生成されませんでした。")
-            
+
         # 元のディレクトリに戻る
         os.chdir(original_dir)
         return pdf_file
-            
+
     except Exception as e:
         print(f"エラーが発生しました: {e}")
         # 元のディレクトリに戻る
@@ -119,21 +121,27 @@ def convert_pdf_to_png(pdf_file: Path, output_file: Path, dpi: int) -> None:
 
         # PDFをPNGに変換
         print("PDFの変換を開始します...")
-        subprocess.run([
-            magick_path, 'convert',
-            '-density', str(dpi),
-            '-background', 'none',
-            '-trim',  # 余白を自動的に削除
-            str(pdf_file),
-            str(output_file)
-        ], check=True)
+        subprocess.run(
+            [
+                magick_path,
+                "convert",
+                "-density",
+                str(dpi),
+                "-background",
+                "none",
+                "-trim",  # 余白を自動的に削除
+                str(pdf_file),
+                str(output_file),
+            ],
+            check=True,
+        )
         print("PDFの変換が完了しました")
 
     except Exception as e:
         print(f"PDF変換エラー: {e}")
         # より詳細なエラー情報を出力
-        if hasattr(e, '__cause__') and e.__cause__:
-            print(f"エラーの詳細: {type(e.__cause__).__name__}: {str(e.__cause__)}")
+        if hasattr(e, "__cause__") and e.__cause__:
+            print(f"エラーの詳細: {type(e.__cause__).__name__}: {e.__cause__!s}")
         raise
 
 
@@ -151,14 +159,21 @@ def cleanup_files(base_path: Path) -> None:
             pass
 
 
+@dataclass
+class LaTeXConfig:
+    """LaTeX変換の設定を保持するクラス"""
+
+    dpi: int = 300
+    background_color: Optional[str] = None
+    foreground_color: Optional[str] = None
+    font_size: int = 12
+    text_color: str = "white"
+
+
 def latex_to_png(
     text: str,
     output_path: Optional[str] = None,
-    dpi: int = 300,
-    background_color: Optional[str] = None,
-    foreground_color: Optional[str] = None,
-    font_size: int = 12,
-    text_color: str = "white",
+    config: Optional[LaTeXConfig] = None,
 ) -> str:
     """
     LaTeX数式をPNG画像に変換する関数
@@ -166,20 +181,20 @@ def latex_to_png(
     Args:
         text (str): LaTeX数式
         output_path (Optional[str]): 出力ファイルのパス (デフォルト: None)
-        dpi (int): 出力画像のDPI (デフォルト: 300)
-        background_color (Optional[str]): 背景色 (デフォルト: None)
-        foreground_color (Optional[str]): 前景色 (デフォルト: None)
-        font_size (int): フォントサイズ (デフォルト: 12)
-        text_color (str): 文字色 (デフォルト: white)
+        config (Optional[LaTeXConfig]): 変換設定 (デフォルト: None)
 
     Returns:
         str: 出力ファイルのパス
     """
+    # デフォルト設定の使用
+    if config is None:
+        config = LaTeXConfig()
+
     # デバッグ情報の出力
     print("=== デバッグ情報 ===")
     pdflatex_cmd = get_pdflatex_command()
     print(f"pdflatexコマンド: {pdflatex_cmd}")
-    
+
     # 出力パスが指定されていない場合は一時ファイルを作成
     if output_path is None:
         output_path = f"formula_{hash(text)}.png"
@@ -196,7 +211,7 @@ def latex_to_png(
 
     try:
         # LaTeXドキュメントを作成
-        tex_content = create_latex_document(text, font_size, text_color)
+        tex_content = create_latex_document(text, config.font_size, config.text_color)
         print(f"生成されたTeXドキュメント:\n{tex_content}")
         tex_file.write_text(tex_content, encoding="utf-8")
         print("TeXファイルの作成完了")
@@ -208,14 +223,14 @@ def latex_to_png(
 
         # PDFをPNGに変換
         print("PDFをPNGに変換中...")
-        convert_pdf_to_png(pdf_file, output_path, dpi)
+        convert_pdf_to_png(pdf_file, output_path, config.dpi)
         print("PDFの変換完了")
 
         # 文字列として返す
         return str(output_path.absolute())
 
     except Exception as e:
-        print(f"エラーの詳細: {type(e).__name__}: {str(e)}")
+        print(f"エラーの詳細: {type(e).__name__}: {e!s}")
         raise
     finally:
         # 一時ファイルを削除
@@ -226,10 +241,11 @@ if __name__ == "__main__":
     # テスト用の数式
     test_formula = r"$\frac{d}{dx}e^x = e^x$"
     output_path = "./formulas/test_formula.png"
+    config = LaTeXConfig(dpi=300, font_size=12, text_color="white")
 
     try:
         # 数式をPNGに変換
-        result = latex_to_png(test_formula, output_path)
+        result = latex_to_png(test_formula, output_path, config)
         print(f"数式を {result} に保存しました。")
     except Exception as e:
         print(f"エラーが発生しました: {e!s}")

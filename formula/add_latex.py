@@ -1,6 +1,4 @@
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
@@ -107,7 +105,9 @@ def add_latex(
         # LaTeX数式をPNGに変換
         png_path = latex_to_png(
             latex_text,
-            output_path=str(ymmp_path.parent / "formulas" / f"formula_{hash(latex_text)}.png"),
+            output_path=str(
+                ymmp_path.parent / "formulas" / f"formula_{hash(latex_text)}.png"
+            ),
         )
 
         # 画像アイテムのテンプレートを作成
@@ -122,8 +122,7 @@ def add_latex(
         # 変更を保存
         output_path = Path(output_path or ymmp_path)
         output_path.write_text(
-            json.dumps(ymmp_data, ensure_ascii=False, indent=4),
-            encoding="utf-8"
+            json.dumps(ymmp_data, ensure_ascii=False, indent=4), encoding="utf-8"
         )
 
     except Exception as e:
